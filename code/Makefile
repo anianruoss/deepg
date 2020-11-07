@@ -1,3 +1,4 @@
+GUROBI_HOME = /Library/gurobi903/mac64
 GUROBI_FLAGS = -m64 -g -I${GUROBI_HOME}/include -L${GUROBI_HOME}/lib -lgurobi_c++ -lgurobi90 -lm
 
 TRANSFORMS = $(wildcard transforms/*.cpp)
