@@ -6,7 +6,16 @@
 
 #pragma once
 
-using namespace std;
+template <class T> class Point {
+public:
+  T x;
+  T y;
+  T z;
+
+  Point(T x, T y, T z) : x(x), y(y), z(z) {}
+};
+
+std::ostream &operator<<(std::ostream &os, const Point<Interval> &point);
 
 template <class T> class Pixel {
 
@@ -33,12 +42,23 @@ public:
   }
   Image(int nRows, int nCols, int nChannels, std::string line, double noise);
   void print_ascii() const;
-  vector<double> to_vector() const;
+  std::vector<double> to_vector() const;
   void print_csv(std::ofstream &fou) const;
 
   Interval find_pixel(int x, int y, int i) const;
   Pixel<double> getPixel(double r, double c, int i) const;
 };
+
+class PointCloud {
+public:
+  const size_t nPoints;
+  std::vector<Point<Interval>> points;
+
+  explicit PointCloud(size_t nPoints) : nPoints(nPoints) {}
+  PointCloud(size_t nPoints, const std::string &line);
+};
+
+std::ostream &operator<<(std::ostream &os, const PointCloud &point_cloud);
 
 class Statistics {
 
@@ -56,7 +76,7 @@ public:
     this->num_poly = 0;
   }
 
-  double getAveragePolyhedra() { return tot_poly_dist / num_poly; }
+  double getAveragePolyhedra() const { return tot_poly_dist / num_poly; }
 
   void updateAveragePolyhedra(double mean) {
     tot_poly_dist += mean;

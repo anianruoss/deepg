@@ -50,7 +50,7 @@ SpatialTransformation *getSpatialTransformation(string &ts) {
       auto domain = HyperBox({Interval(d[0], d[1])});
       transforms.push_back(new ShearTransformation(domain));
     } else {
-      throw "Transformation not supported!";
+      throw std::invalid_argument("Transformation not supported!");
     }
   }
 
@@ -60,6 +60,52 @@ SpatialTransformation *getSpatialTransformation(string &ts) {
 
   CompositionTransform inv_transform = CompositionTransform(transforms);
   return inv_transform.getInverse();
+}
+
+SpatialTransformation3D *getSpatialTransformation3D(string &ts) {
+  vector<string> tokens;
+  while (ts.find(';') != std::string::npos) {
+    tokens.push_back(ts.substr(0, ts.find(';')));
+    ts = ts.substr(ts.find(';') + 1);
+  }
+  tokens.push_back(ts);
+
+  vector<SpatialTransformation3D *> transforms;
+  for (const string &s : tokens) {
+    size_t pos = s.find('(');
+    vector<double> d;
+
+    string name = s.substr(0, pos);
+    string rest = s.substr(pos + 1, s.size() - pos - 2);
+    rest += ",";
+
+    string curr;
+    for (const char &chr : rest) {
+      if (chr == ',') {
+        d.push_back(stod(curr));
+        curr = "";
+      } else {
+        curr += chr;
+      }
+    }
+
+    if (name == "Rotation3d") {
+      assert(d.size() == 6);
+      d[0] = d[0] / 180 * M_PI;
+      d[1] = d[1] / 180 * M_PI;
+      d[2] = d[2] / 180 * M_PI;
+      d[3] = d[3] / 180 * M_PI;
+      d[4] = d[4] / 180 * M_PI;
+      d[5] = d[5] / 180 * M_PI;
+      auto domain = HyperBox({{d[0], d[1]}, {d[2], d[3]}, {d[4], d[5]}});
+      transforms.push_back(new RotationTransformation3D(domain));
+    } else {
+      throw std::invalid_argument("Transformation not supported!");
+    }
+  }
+
+  assert(transforms.size() == 1);
+  return transforms[0];
 }
 
 PixelTransformation *getPixelTransformation(string &ts) {
@@ -97,7 +143,7 @@ PixelTransformation *getPixelTransformation(string &ts) {
       auto domain = HyperBox({Interval(d[0], d[1]), Interval(d[2], d[3])});
       transforms.push_back(new BrightnessTransformation(domain));
     } else {
-      throw "Transformation not supported!";
+      throw std::invalid_argument("Transformation not supported!");
     }
   }
 

@@ -3,17 +3,53 @@
 #include <cmath>
 #include <iostream>
 
+std::ostream &operator<<(std::ostream &os, const Point<Interval> &point) {
+  os << "(" << point.x << ", " << point.y << ", " << point.z << ")";
+  return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const PointCloud &point_cloud) {
+  for (size_t i = 0; i < point_cloud.nPoints; ++i) {
+    os << point_cloud.points[i] << std::endl;
+  }
+  return os;
+}
+
+PointCloud::PointCloud(size_t nPoints, const std::string &line)
+    : nPoints(nPoints) {
+  bool first = true;
+  std::string curr;
+  std::vector<Interval> intervals;
+
+  for (char i : line) {
+    if (i == ',') {
+      if (!first) { // first denotes label
+        intervals.emplace_back(stod(curr), stod(curr));
+      }
+      first = false;
+      curr = "";
+    } else {
+      curr += i;
+    }
+  }
+  intervals.emplace_back(stod(curr), stod(curr));
+
+  for (size_t p = 0; p < 3 * nPoints; p += 3) {
+    points.emplace_back(intervals[p], intervals[p + 1], intervals[p + 2]);
+  }
+}
+
 Image::Image(int nRows, int nCols, int nChannels, std::string line,
              double noise) {
   this->nRows = nRows;
   this->nCols = nCols;
   this->nChannels = nChannels;
   this->noise = noise;
-  string curr;
+  std::string curr;
   int j = 0;
   bool first = true;
 
-  vector<Interval> its;
+  std::vector<Interval> its;
   for (size_t i = 0; i < line.size(); ++i) {
     if (line[i] == ',') {
       if (!first) { // first denotes label
@@ -55,8 +91,8 @@ void Image::print_csv(std::ofstream &fou) const {
   fou << std::endl;
 }
 
-vector<double> Image::to_vector() const {
-  vector<double> result;
+std::vector<double> Image::to_vector() const {
+  std::vector<double> result;
   for (int i = 0; i < nRows; ++i) {
     for (int j = 0; j < nCols; ++j) {
       for (int k = 0; k < nChannels; ++k) {
@@ -69,9 +105,9 @@ vector<double> Image::to_vector() const {
 }
 
 void Image::print_ascii() const {
-  std::cout
-      << "===================================================================="
-      << std::endl;
+  std::cout << "============================================================="
+               "======="
+            << std::endl;
   double sum_widths = 0;
   for (int i = 0; i < nRows; ++i) {
     for (int j = 0; j < nCols; ++j) {
@@ -88,9 +124,9 @@ void Image::print_ascii() const {
   }
   std::cout << "Average width: " << sum_widths / (nRows * nCols * nChannels)
             << std::endl;
-  std::cout
-      << "===================================================================="
-      << std::endl;
+  std::cout << "============================================================="
+               "======="
+            << std::endl;
 }
 
 Interval Image::find_pixel(int x, int y, int i) const {

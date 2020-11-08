@@ -2,9 +2,9 @@
 #include "gurobi_c++.h"
 #include "utils/constants.h"
 #include "utils/polyhedra_optimizer.h"
+#include "utils/utilities.h"
 #include <chrono>
 #include <future>
-#include <thread>
 #include <utility>
 
 LipschitzFunction getLipschitzFunction(
@@ -159,6 +159,53 @@ Image abstractWithSimpleBox(
   return ret;
 }
 
+Point<Interval>
+computePointBox(int p, const vector<HyperBox> &boxes,
+                const PointCloud &pointCloud,
+                const SpatialTransformation3D &spatialTransformation) {
+  Point<Interval> abstractPoint = pointCloud.points[p];
+  Point<Interval> transformedPoint((Interval()), Interval(), Interval());
+
+  for (const auto &hbox : boxes) {
+    Point<Interval> newPoint =
+        spatialTransformation.transform(abstractPoint, hbox.it);
+
+    transformedPoint.x = transformedPoint.x.join(newPoint.x);
+    transformedPoint.y = transformedPoint.y.join(newPoint.y);
+    transformedPoint.z = transformedPoint.z.join(newPoint.z);
+  }
+
+  return transformedPoint;
+}
+
+PointCloud abstractWithSimpleBox(const HyperBox &domain,
+                                 const PointCloud &pointCloud,
+                                 SpatialTransformation3D &spatialTransformation,
+                                 size_t insideSplits) {
+  PointCloud transformedPointCloud(pointCloud.nPoints);
+  std::vector<vector<double>> splitPoints;
+  std::vector<HyperBox> boxes = domain.split(insideSplits, splitPoints);
+
+  std::vector<std::future<Point<Interval>>> futures;
+
+  for (size_t p = 0; p < pointCloud.nPoints; ++p) {
+    futures.push_back(std::async(std::launch::async, computePointBox, p, boxes,
+                                 pointCloud, std::ref(spatialTransformation)));
+    if ((int)futures.size() == Constants::NUM_THREADS) {
+      for (auto &future : futures) {
+        transformedPointCloud.points.push_back(future.get());
+      }
+      futures.clear();
+    }
+  }
+
+  for (auto &future : futures) {
+    transformedPointCloud.points.push_back(future.get());
+  }
+
+  return transformedPointCloud;
+}
+
 vector<Polyhedra> abstractWithCustomDP(
     const HyperBox &combinedDomain, const Image &img,
     const SpatialTransformation &spatialTransformation,
@@ -208,10 +255,10 @@ vector<Polyhedra> abstractWithCustomDP(
 
 double checkBoundsWithSampling(int k, int degree,
                                std::default_random_engine generator,
-                               LipschitzFunction lfLower,
-                               LipschitzFunction lfUpper, double biasLower,
-                               vector<double> wLower, double biasUpper,
-                               vector<double> wUpper) {
+                               const LipschitzFunction &lfLower,
+                               const LipschitzFunction &lfUpper,
+                               double biasLower, vector<double> wLower,
+                               double biasUpper, vector<double> wUpper) {
   vector<PointD> samples = lfLower.domain.sample(k, generator);
   double avgLen = 0;
   for (auto sample : samples) {
@@ -314,4 +361,157 @@ vector<Polyhedra> abstractWithPolyhedra(
   counter.updateAveragePolyhedra(mean);
   cout << "Average distance between polyhedra: " << mean << endl;
   return ret;
+}
+
+LipschitzFunction
+getLipschitzFunction(const Point<double> &point, const HyperBox &domain,
+                     const SpatialTransformation3D &spatialTransformation,
+                     size_t coordinate) {
+  std::function<double(std::vector<double>)> minF =
+      [coordinate, point,
+       &spatialTransformation](const std::vector<double> &params) {
+        Point<double> transformedPoint =
+            spatialTransformation.transform(point, params);
+
+        switch (coordinate) {
+        case 0:
+          return transformedPoint.x;
+        case 1:
+          return transformedPoint.y;
+        case 2:
+          return transformedPoint.z;
+        default:
+          throw std::invalid_argument("coordinate out of range");
+        }
+      };
+
+  Point<Interval> abstractPoint = {
+      {point.x, point.x}, {point.y, point.y}, {point.z, point.z}};
+
+  std::function<std::pair<bool, std::vector<Interval>>(HyperBox)> gradF =
+      [coordinate, abstractPoint, &spatialTransformation](HyperBox hbox) {
+        std::vector<Interval> params(
+            hbox.it.begin(), hbox.it.begin() + spatialTransformation.dim);
+
+        std::vector<Interval> dx, dy, dz, result;
+        std::tie(dx, dy, dz) =
+            spatialTransformation.gradTransform(abstractPoint, params);
+
+        switch (coordinate) {
+        case 0:
+          result = dx;
+          break;
+        case 1:
+          result = dy;
+          break;
+        case 2:
+          result = dz;
+          break;
+        default:
+          throw std::invalid_argument("coordinate out of range");
+        }
+
+        assert(result.size() == hbox.dim);
+        return make_pair(true, result);
+      };
+
+  return LipschitzFunction(minF, domain, gradF);
+}
+
+std::pair<double, Polyhedra> computePointPolyhedra(
+    const HyperBox &domain, size_t p, size_t coordinate, int degree, double eps,
+    const GRBEnv &env, const PointCloud &pointCloud,
+    const SpatialTransformation3D &spatialTransformation,
+    const PointCloud &transformedPointCloud, Statistics &counter) {
+  std::default_random_engine generator;
+
+  Point<Interval> abstractPoint = pointCloud.points[p];
+  assert(abstractPoint.x.inf == abstractPoint.x.sup);
+  assert(abstractPoint.y.inf == abstractPoint.y.sup);
+  assert(abstractPoint.z.inf == abstractPoint.z.sup);
+  Point<double> point(abstractPoint.x.inf, abstractPoint.y.inf,
+                      abstractPoint.z.sup);
+  auto f =
+      getLipschitzFunction(point, domain, spatialTransformation, coordinate);
+
+  std::vector<double> wLower, wUpper;
+  double biasLower, biasUpper;
+  std::tie(wLower, biasLower) =
+      findLower(env, f, generator, Constants::LP_SAMPLES, eps, degree, counter);
+  std::tie(wUpper, biasUpper) =
+      findUpper(env, f, generator, Constants::LP_SAMPLES, eps, degree, counter);
+
+  double avgLen =
+      checkBoundsWithSampling(Constants::NUM_POLY_CHECK, degree, generator, f,
+                              f, biasLower, wLower, biasUpper, wUpper);
+
+  Interval transformedInterval;
+  switch (coordinate) {
+  case 0:
+    transformedInterval = transformedPointCloud.points[p].x;
+    break;
+  case 1:
+    transformedInterval = transformedPointCloud.points[p].y;
+    break;
+  case 2:
+    transformedInterval = transformedPointCloud.points[p].z;
+    break;
+  default:
+    throw std::invalid_argument("coordinate out of range");
+  }
+
+  // If average length between polyhedra bounds is worse than interval bounds,
+  // resort to interval
+  if (avgLen > transformedInterval.length()) {
+    biasLower = transformedInterval.inf;
+    biasUpper = transformedInterval.sup;
+    for (size_t j = 0; j < wLower.size(); ++j) {
+      wLower[j] = 0;
+      wUpper[j] = 0;
+    }
+    avgLen = biasUpper - biasLower;
+  }
+  return {avgLen,
+          {transformedInterval, wLower, biasLower, wUpper, biasUpper, degree}};
+}
+
+std::vector<Polyhedra>
+abstractWithPolyhedra(const HyperBox &domain, const GRBEnv &env, int degree,
+                      double eps, const PointCloud &pointCloud,
+                      const SpatialTransformation3D &spatialTransformation,
+                      const PointCloud &transformedPointCloud,
+                      Statistics &counter) {
+  std::vector<Polyhedra> results;
+  double mean = 0;
+
+  std::vector<std::future<std::pair<double, Polyhedra>>> futures;
+
+  for (size_t p = 0; p < pointCloud.nPoints; ++p) {
+    for (size_t coordinate = 0; coordinate < 3; ++coordinate) {
+      futures.push_back(
+          std::async(std::launch::async, computePointPolyhedra, domain, p,
+                     coordinate, degree, eps, std::ref(env),
+                     std::ref(pointCloud), std::ref(spatialTransformation),
+                     std::ref(transformedPointCloud), std::ref(counter)));
+      if ((int)futures.size() == Constants::NUM_THREADS) {
+        for (auto &future : futures) {
+          auto tmp = future.get();
+          mean += tmp.first;
+          results.push_back(tmp.second);
+        }
+        futures.clear();
+      }
+    }
+  }
+  for (auto &future : futures) {
+    auto tmp = future.get();
+    mean += tmp.first;
+    results.push_back(tmp.second);
+  }
+
+  mean /= 3. * pointCloud.nPoints;
+  counter.updateAveragePolyhedra(mean);
+  std::cout << "Average distance between polyhedra: " << mean << std::endl;
+
+  return results;
 }
