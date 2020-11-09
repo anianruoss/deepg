@@ -145,6 +145,7 @@ int main(int argc, char **argv) {
       std::cout << "Interval box: " << endl;
       PointCloud transformedPointCloud = abstractWithSimpleBox(
           hbox, point_clouds[j], spatialTransformation, num_inside_splits);
+      fou << transformedPointCloud;
 
       std::chrono::system_clock::time_point endBox =
           std::chrono::system_clock::now();
