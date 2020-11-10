@@ -89,7 +89,21 @@ SpatialTransformation3D *getSpatialTransformation3D(string &ts) {
       }
     }
 
-    if (name == "Rotation3d") {
+    if (name == "Rotation1d") {
+      assert(d.size() == 2);
+      d[0] = d[0] / 180 * M_PI;
+      d[1] = d[1] / 180 * M_PI;
+      auto domain = HyperBox({{d[0], d[1]}});
+      transforms.push_back(new RotationTransformation1D(domain));
+    } else if (name == "Rotation2d") {
+      assert(d.size() == 4);
+      d[0] = d[0] / 180 * M_PI;
+      d[1] = d[1] / 180 * M_PI;
+      d[2] = d[2] / 180 * M_PI;
+      d[3] = d[3] / 180 * M_PI;
+      auto domain = HyperBox({{d[0], d[1]}, {d[2], d[3]}});
+      transforms.push_back(new RotationTransformation2D(domain));
+    } else if (name == "Rotation3d") {
       assert(d.size() == 6);
       d[0] = d[0] / 180 * M_PI;
       d[1] = d[1] / 180 * M_PI;
