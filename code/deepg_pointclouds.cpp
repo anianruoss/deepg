@@ -80,8 +80,6 @@ int main(int argc, char **argv) {
       num_tests = stoul(value);
     } else if (name == "debug") {
       debug = true;
-    } else if (name == "num_attacks") {
-      Constants::NUM_ATTACKS = stoi(value);
     } else if (name == "poly_degree") {
       Constants::POLY_DEGREE = stoi(value);
     } else if (name == "poly_eps") {
