@@ -89,7 +89,25 @@ SpatialTransformation3D *getSpatialTransformation3D(string &ts) {
       }
     }
 
-    if (name == "Rotation1d") {
+    if (name == "RotationX") {
+      assert(d.size() == 2);
+      d[0] = d[0] / 180 * M_PI;
+      d[1] = d[1] / 180 * M_PI;
+      auto domain = HyperBox({{d[0], d[1]}});
+      transforms.push_back(new RotationXTransformation3D(domain));
+    } else if (name == "RotationY") {
+      assert(d.size() == 2);
+      d[0] = d[0] / 180 * M_PI;
+      d[1] = d[1] / 180 * M_PI;
+      auto domain = HyperBox({{d[0], d[1]}});
+      transforms.push_back(new RotationYTransformation3D(domain));
+    } else if (name == "RotationZ") {
+      assert(d.size() == 2);
+      d[0] = d[0] / 180 * M_PI;
+      d[1] = d[1] / 180 * M_PI;
+      auto domain = HyperBox({{d[0], d[1]}});
+      transforms.push_back(new RotationZTransformation3D(domain));
+    } else if (name == "Rotation1d") {
       assert(d.size() == 2);
       d[0] = d[0] / 180 * M_PI;
       d[1] = d[1] / 180 * M_PI;
@@ -113,13 +131,28 @@ SpatialTransformation3D *getSpatialTransformation3D(string &ts) {
       d[5] = d[5] / 180 * M_PI;
       auto domain = HyperBox({{d[0], d[1]}, {d[2], d[3]}, {d[4], d[5]}});
       transforms.push_back(new RotationTransformation3D(domain));
+    } else if (name == "ShearX") {
+      assert(d.size() == 2);
+      auto domain = HyperBox({{d[0], d[1]}});
+      transforms.push_back(new ShearXTransformation3D(domain));
+    } else if (name == "ShearY") {
+      assert(d.size() == 2);
+      auto domain = HyperBox({{d[0], d[1]}});
+      transforms.push_back(new ShearYTransformation3D(domain));
+    } else if (name == "ShearZ") {
+      assert(d.size() == 2);
+      auto domain = HyperBox({{d[0], d[1]}});
+      transforms.push_back(new ShearZTransformation3D(domain));
     } else {
       throw std::invalid_argument("Transformation not supported!");
     }
   }
 
-  assert(transforms.size() == 1);
-  return transforms[0];
+  if (transforms.size() == 1) {
+    return transforms[0];
+  }
+
+  return CompositionTransform3D(transforms).getInverse();
 }
 
 PixelTransformation *getPixelTransformation(string &ts) {
