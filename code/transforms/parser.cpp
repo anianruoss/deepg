@@ -1,4 +1,5 @@
 #include "parser.h"
+#include <algorithm>
 
 SpatialTransformation *getSpatialTransformation(string &ts) {
   vector<string> tokens;
@@ -143,6 +144,18 @@ SpatialTransformation3D *getSpatialTransformation3D(string &ts) {
       assert(d.size() == 2);
       auto domain = HyperBox({{d[0], d[1]}});
       transforms.push_back(new ShearZTransformation3D(domain));
+    } else if (name == "TaperingZ") {
+      assert(d.size() == 4);
+      auto domain = HyperBox({{d[0], d[1]}, {d[2], d[3]}});
+      transforms.push_back(new TaperingZTransformation3D(domain));
+    } else if (name == "TaperingZInverse") {
+      assert(d.size() == 4);
+      auto domain = HyperBox({{d[0], d[1]}, {d[2], d[3]}});
+      transforms.push_back(new TaperingZInverseTransformation3D(domain));
+    } else if (name == "TwistingZ") {
+      assert(d.size() == 2);
+      auto domain = HyperBox({{d[0], d[1]}});
+      transforms.push_back(new TwistingZTransformation3D(domain));
     } else {
       throw std::invalid_argument("Transformation not supported!");
     }
@@ -152,7 +165,10 @@ SpatialTransformation3D *getSpatialTransformation3D(string &ts) {
     return transforms[0];
   }
 
-  return CompositionTransform3D(transforms).getInverse();
+  // parser reads left-to-right but transforms are applied right-to-left
+  std::reverse(transforms.begin(), transforms.end());
+
+  return new CompositionTransform3D(transforms);
 }
 
 PixelTransformation *getPixelTransformation(string &ts) {

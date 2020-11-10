@@ -15,9 +15,12 @@
 #include "transforms/shear_x.h"
 #include "transforms/shear_y.h"
 #include "transforms/shear_z.h"
+#include "transforms/tapering_z.h"
+#include "transforms/tapering_z_inverse.h"
 #include "transforms/transformation.h"
 #include "transforms/translation.h"
 #include "transforms/translation_1d.h"
+#include "twisting_z.h"
 
 SpatialTransformation3D *getSpatialTransformation3D(string &s);
 SpatialTransformation *getSpatialTransformation(string &s);
