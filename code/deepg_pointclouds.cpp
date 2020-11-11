@@ -13,8 +13,6 @@
 #include <string>
 #include <vector>
 
-const GRBEnv &env = GRBEnv("gurobi.log");
-
 void getSplitPoints(vector<vector<double>> &splitPoints, string value) {
   string token;
 
@@ -118,6 +116,15 @@ int main(int argc, char **argv) {
     }
   }
 
+  GRBEnv *env;
+  try {
+    env = new GRBEnv("gurobi.log");
+  } catch (GRBException &e) {
+    std::cout << "Error code = " << e.getErrorCode() << std::endl;
+    std::cout << e.getMessage() << std::endl;
+    exit(1);
+  }
+
   double totalBoxRuntime = 0, totalPolyRuntime = 0;
   Statistics counter;
 
@@ -158,7 +165,7 @@ int main(int argc, char **argv) {
           std::chrono::system_clock::now();
 
       std::vector<Polyhedra> polys = abstractWithPolyhedra(
-          hbox, env, Constants::POLY_DEGREE, Constants::POLY_EPS,
+          hbox, *env, Constants::POLY_DEGREE, Constants::POLY_EPS,
           point_clouds[j], spatialTransformation, transformedPointCloud,
           counter);
       for (const auto &poly : polys) {

@@ -39,7 +39,7 @@ do
     experiment_dir=tapering_1024p_${eps}
     mkdir ${experiment_dir}
 
-    for theta in 1 2 3 4 5 15 30 45 60 75 90
+    for theta in 1 2 3 4 5 7 8 9 10
     do
         new_dir=${experiment_dir}/modelnet40_1024p_tapering_alpha_${theta}_beta_${theta}_intervals_1_implicit_intervals_25_eps_${eps}
         cp -r ${old_dir} ${new_dir}
@@ -56,7 +56,7 @@ do
     experiment_dir=shearing_1024p_${eps}
     mkdir ${experiment_dir}
 
-    for theta in 1 2 3 4 5 15 30 45 60 75 90
+    for theta in 1 2 3
     do
         new_dir=${experiment_dir}/modelnet40_1024p_shearing_alpha_${theta}_beta_${theta}_gamma_${theta}_delta_${theta}_epsilon_${theta}_zeta_${theta}_intervals_1_implicit_intervals_25_eps_${eps}
         cp -r ${old_dir} ${new_dir}
