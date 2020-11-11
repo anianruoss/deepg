@@ -62,6 +62,7 @@ do
         cp -r ${old_dir} ${new_dir}
         sed -i "s/ShearZ(-1,1,-1,1);ShearY(-1,1,-1,1);ShearX(-1,1,-1,1)/ShearZ(-${theta},${theta},-${theta},${theta});ShearY(-${theta},${theta},-${theta},${theta});ShearX(-${theta},${theta},-${theta},${theta})/" ${new_dir}/config.txt
         sed -i "s/num_points            64/num_points            1024/" ${new_dir}/config.txt
+        sed -i "s/inside_splits         25/inside_splits         5/" ${new_dir}/config.txt
         sed -i "s/poly_eps              0.0000001/poly_eps              ${eps}/" ${new_dir}/config.txt
     done
 done

@@ -4,8 +4,8 @@ Point<double>
 ShearXTransformation3D::transform(const Point<double> &point,
                                   const std::vector<double> &params) const {
   assert(params.size() == 2);
-  double sy = params[1];
-  double sz = params[0];
+  double sy = params[0];
+  double sz = params[1];
   return {point.x, sy * point.x + point.y, sz * point.x + point.z};
 }
 
