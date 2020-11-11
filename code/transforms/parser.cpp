@@ -154,6 +154,8 @@ SpatialTransformation3D *getSpatialTransformation3D(string &ts) {
       transforms.push_back(new TaperingZInverseTransformation3D(domain));
     } else if (name == "TwistingZ") {
       assert(d.size() == 2);
+      d[0] = d[0] / 180 * M_PI;
+      d[1] = d[1] / 180 * M_PI;
       auto domain = HyperBox({{d[0], d[1]}});
       transforms.push_back(new TwistingZTransformation3D(domain));
     } else {
