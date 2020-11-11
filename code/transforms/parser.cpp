@@ -133,16 +133,16 @@ SpatialTransformation3D *getSpatialTransformation3D(string &ts) {
       auto domain = HyperBox({{d[0], d[1]}, {d[2], d[3]}, {d[4], d[5]}});
       transforms.push_back(new RotationTransformation3D(domain));
     } else if (name == "ShearX") {
-      assert(d.size() == 2);
-      auto domain = HyperBox({{d[0], d[1]}});
+      assert(d.size() == 4);
+      auto domain = HyperBox({{d[0], d[1]}, {d[2], d[3]}});
       transforms.push_back(new ShearXTransformation3D(domain));
     } else if (name == "ShearY") {
-      assert(d.size() == 2);
-      auto domain = HyperBox({{d[0], d[1]}});
+      assert(d.size() == 4);
+      auto domain = HyperBox({{d[0], d[1]}, {d[2], d[3]}});
       transforms.push_back(new ShearYTransformation3D(domain));
     } else if (name == "ShearZ") {
-      assert(d.size() == 2);
-      auto domain = HyperBox({{d[0], d[1]}});
+      assert(d.size() == 4);
+      auto domain = HyperBox({{d[0], d[1]}, {d[2], d[3]}});
       transforms.push_back(new ShearZTransformation3D(domain));
     } else if (name == "TaperingZ") {
       assert(d.size() == 4);

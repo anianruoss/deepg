@@ -25,7 +25,7 @@ RotationXTransformation3D::gradTransform(const Point<Interval> &point,
   Interval gamma = params[0];
   return {{{0, 0}},
           {-sin(gamma) * point.y - cos(gamma) * point.z},
-          {cos(gamma) * point.z - sin(gamma) * point.z}};
+          {cos(gamma) * point.y - sin(gamma) * point.z}};
 }
 
 std::tuple<Interval, Interval, Interval>

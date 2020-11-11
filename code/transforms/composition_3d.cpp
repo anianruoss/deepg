@@ -74,9 +74,9 @@ CompositionTransform3D::computeGrad(const Point<Interval> &point,
     for (int idx = (int)gradX.size() - 1; idx >= 0; --idx) {
       retX.insert(retX.begin(),
                   dxdx * gradX[idx] + dxdy * gradY[idx] + dxdz * gradZ[idx]);
-      retY.insert(retX.begin(),
+      retY.insert(retY.begin(),
                   dydx * gradX[idx] + dydy * gradY[idx] + dydz * gradZ[idx]);
-      retZ.insert(retX.begin(),
+      retZ.insert(retZ.begin(),
                   dzdx * gradX[idx] + dzdy * gradY[idx] + dzdz * gradZ[idx]);
     }
 
