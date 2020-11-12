@@ -1,27 +1,36 @@
+import matplotlib.pyplot as plt
+import argparse
 import pandas as pd
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--file', type=str, required=True)
+args = parser.parse_args()
+
 results = pd.DataFrame(
-    columns=['alpha', 'beta', 'gamma', 'running time', 'distance']
+    columns=['eps', 'theta', 'running time', 'distance']
 )
 
-with open('results.txt', 'r') as f:
+with open(args.file, 'r') as f:
     idx = 0
 
     for line in f.readlines():
-        if line.startswith('experiments'):
-            name = line.split('experiments/')[1].split('_')
-            idx_alpha = name.index('alpha')
-            idx_beta = name.index('beta')
-            idx_gamma = name.index('gamma')
-            alpha = '{' + f'{name[idx_alpha + 1: idx_beta]}' + '}'
-            beta = '{' + f'{name[idx_beta + 1: idx_gamma]}' + '}'
-            gamma = '{' + f'{name[idx_gamma + 1: name.index("intervals")]}' + '}'
+        if 'theta' in line:
+            name = line.strip().split('/')[1].split('_')
+            theta = name[name.index('theta') + 1]
+            eps = name[-1]
         if 'runtime' in line:
             time = float(line.split('(s): ')[1])
         if 'distance' in line: 
             distance = float(line.split('distance: ')[1])
         if not line.strip():
-            results.loc[idx] = [alpha, beta, gamma, time, distance]
+            results.loc[idx] = [eps, theta, time, distance]
             idx += 1
 
-results.to_latex('parsed_results.tex', index=False)
+for eps, eps_results in results.groupby('eps'):
+    print(eps)
+    print(eps_results)
+    print()
+    plt.plot(eps_results['running time'], label=f'eps = {eps}')
+
+plt.show()
+#results.to_latex('parsed_results.tex', index=False)
