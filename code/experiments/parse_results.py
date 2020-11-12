@@ -16,7 +16,7 @@ with open(args.file, 'r') as f:
     for line in f.readlines():
         if 'theta' in line:
             name = line.strip().split('/')[1].split('_')
-            theta = name[name.index('theta') + 1]
+            theta = float(name[name.index('theta') + 1])
             eps = name[-1]
         if 'runtime' in line:
             time = float(line.split('(s): ')[1])
@@ -26,11 +26,14 @@ with open(args.file, 'r') as f:
             results.loc[idx] = [eps, theta, time, distance]
             idx += 1
 
-for eps, eps_results in results.groupby('eps'):
-    print(eps)
-    print(eps_results)
-    print()
-    plt.plot(eps_results['running time'], label=f'eps = {eps}')
+fig, ax = plt.subplots(1, 1)
 
-plt.show()
-#results.to_latex('parsed_results.tex', index=False)
+for eps, eps_results in results.groupby('eps'):
+    eps_results = eps_results.sort_values(by='theta')
+    ax.plot(eps_results['theta'], eps_results['running time'], label=f'eps = {eps}')
+
+ax.legend()
+ax.set_xlabel('theta')
+ax.set_ylabel('running time (s)')
+fig.suptitle(args.file.split('.txt')[0])
+plt.savefig(args.file.split('.txt')[0] + '.eps')
