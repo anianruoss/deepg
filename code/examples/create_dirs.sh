@@ -52,7 +52,7 @@ done
 
 for theta in 2 3
 do
-    old_dir=modelnet40_64p_rotation_z_y_x_theta_${theta}_intervals_${theta}_eps_0.0000001
+    new_dir=modelnet40_64p_rotation_z_y_x_theta_${theta}_intervals_${theta}_eps_0.0000001
     cp -r ${old_dir} ${new_dir}
     sed -i "s/RotationX(-1,1)/RotationX(-${theta},${theta})/" ${new_dir}/config.txt
     sed -i "s/RotationY(-1,1)/RotationY(-${theta},${theta})/" ${new_dir}/config.txt
@@ -122,7 +122,7 @@ old_dir=modelnet40_64p_twisting_z_theta_10_intervals_1_eps_0.0000001
 
 for theta in 20 30
 do
-    new_dir=modelnet40_64p_twisting_z_rotation_z_theta_${theta}_1_intervals_1_eps_0.0000001
+    new_dir=modelnet40_64p_twisting_z_theta_${theta}_intervals_1_eps_0.0000001
     cp -r ${old_dir} ${new_dir}
     sed -i "s/TwistingZ(-10,10)/TwistingZ(-${theta},${theta})/" ${new_dir}/config.txt
 done
