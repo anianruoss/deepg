@@ -1,8 +1,8 @@
 dataset               modelnet40
 num_points            64
-spatial_transform     ShearZ(-1,1,-1,1);ShearY(-1,1,-1,1);ShearX(-1,1,-1,1)
+spatial_transform     ShearZ(-0.01,0.01,-0.01,0.01)
 chunks                1
-inside_splits         5
+inside_splits         125
 num_tests             103
 poly_eps              0.0000001
 ub_estimate           Triangle
