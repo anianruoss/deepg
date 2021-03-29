@@ -23,7 +23,6 @@ if (MSVC AND MT)
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
 endif ()
 
-set(ENV{GUROBI_HOME} /Library/gurobi903/mac64)
 set(GUROBI_CXX_LIBRARY "$ENV{GUROBI_HOME}/lib/libgurobi_c++.a")
 find_package(GUROBI REQUIRED)
 include_directories(${GUROBI_INCLUDE_DIRS})
