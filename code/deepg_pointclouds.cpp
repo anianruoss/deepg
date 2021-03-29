@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  assert(dataset == "modelnet40");
+  assert(dataset == "modelnet40" || dataset == "shapenet");
   SpatialTransformation3D &spatialTransformation =
       *getSpatialTransformation3D(spatialTransformName);
   string point_clouds_path = "datasets/" + dataset + "_" + set + ".csv";
